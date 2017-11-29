@@ -9,13 +9,23 @@
 
 import copy as cp
 import pandas as pd
-from ds_helper_functions import *
+from ds_helper_functions import (
+    bootstrap,
+    subsample_per_class,
+    balance_dataset_on_dimensions,
+    all_data_model,
+    get_best_features,
+    get_important_features,
+    cross_validate_model_with_addon,
+    cross_validate_model,
+)
 from sklearn.ensemble import RandomForestClassifier
 
-##### Functions for studying new features when adding to triton dataset
-##### When you add the new feature this will re-compute the aggregate features
+# Functions for studying new features when adding to triton dataset
+# When you add the new feature this will re-compute the aggregate features
 
-def _severity(data_row, comparitor = '>'):
+
+def _severity(data_row, comparitor='>'):
     if comparitor not in ['>', '<']:
         raise ValueError('Comparitor must be of value > or <')
 
@@ -23,7 +33,7 @@ def _severity(data_row, comparitor = '>'):
     for data_element in data_row:
         try:
             value = int(data_element)
-            if value<0 or value>4:
+            if value < 0 or value > 4:
                 continue
             if return_value == 'missing':
                 return_value = value
@@ -35,11 +45,14 @@ def _severity(data_row, comparitor = '>'):
             continue
     return str(return_value)
 
+
 def max_severity(data_row):
     return _severity(data_row, comparitor='>')
 
+
 def min_severity(data_row):
     return _severity(data_row, comparitor='<')
+
 
 def count_severity_level(data_row, severity_level):
     return_value = 0
@@ -133,7 +146,6 @@ def run_new_feature_importance_tally(in_df, for_sure_features, new_candidate_fea
 
     ### Now do a final run will the best features to figure out which should be kept
     passing_tally_new_candidate_features = [ele[0] for ele in sorted_tally]
-    filtered_passing_tally_new_candidate_features = [ele for ele in sorted_tally if ele[1]>0.2*number_of_tries]
 
     passing_tally_all_features = passing_tally_new_candidate_features[:number_of_features_to_keep] + for_sure_features
     passing_tally_dataset = incorporate_new_adir_features_to_aggregations(in_df, for_sure_features, passing_tally_new_candidate_features)
@@ -197,7 +209,6 @@ def bootstrap_cross_validate_new_features(data_df, new_features_to_try, for_sure
     feature_encoding_map = model_parameters_dict['feature_encoding_map']
     outcome_column = model_parameters_dict['outcome_column']
     dunno_range = model_parameters_dict['dunno_range']
-    class_weight = model_parameters_dict['class_weight']
     balancing_dimensions = model_parameters_dict['balancing_dimensions']
     bootstrapping_number_of_tries = model_parameters_dict['bootstrapping_number_of_tries']
     bootstrapping_sample_percent = model_parameters_dict['bootstrapping_sample_percent']

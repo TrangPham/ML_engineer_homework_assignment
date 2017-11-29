@@ -1,23 +1,18 @@
 import itertools
-import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plot
-from sklearn import preprocessing
-from sklearn import tree
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.naive_bayes import BernoulliNB
 from sklearn import metrics
 from sklearn import cross_validation
 from sklearn import feature_extraction
 import math
-import random
-import marshal, pickle, types
+import marshal
+import pickle
+import types
 import copy as cp
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 from sklearn import linear_model
-from sklearn_0p18_bridge_code import *
+from sklearn_0p18_bridge_code import confusion_matrix_0p18
 
 
 #converts a value to a float gracefully
@@ -27,7 +22,7 @@ def convert_to_float(x):
     except:
         return np.NaN
 
-    
+
 #handy function that operates on a DF column and maps the data range to [0-1]
 def normalize_range(column):
 
