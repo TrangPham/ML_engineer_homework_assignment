@@ -3,7 +3,14 @@ import numpy as np
 import pandas as pd
 import copy as cp
 
+# ADOS conversion helper functions allowing to convert from V1 to V2 and vice versa
 
+# Each row in this dataframe represents a transformation
+# v1_key: key name in V1
+# v2_key: key name in V2
+# details_of_question_or_answer_changes: reason for transformation
+# v1_to_v2_answer_mapping: map of V1 answer value to V2 answer value
+# v2_to_v1_answer_mapping: map of V2 answer value to V1 answer value
 ADOS_v1_vs_v2_mapping_df = pd.DataFrame([
     {'v1_key': 'ados1_a1', 'v2_key': 'ados1_a1', 'details_of_question_or_answer_changes': 'mapping of answer, plus minor clarifications, probably not a big deal',
         'v1_to_v2_answer_mapping': {'8': '4'}, 'v2_to_v1_answer_mapping': {'4': '8'}},
