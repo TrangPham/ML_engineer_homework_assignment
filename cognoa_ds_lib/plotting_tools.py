@@ -1,7 +1,4 @@
 import matplotlib.pyplot as plt
-import matplotlib
-### Importing matplotlib both ways because there are a mix of functions below that use different interfaces. 
-### Would be good to clean this up at some point.
 import numpy as np
 import pandas as pd
 
@@ -19,8 +16,8 @@ def _get_list_of_unique_x_values(list_of_x_data_lists):
 def overlay_bar_charts_from_numeric_arrays(list_of_x_data_lists, legend_label_list, plot_options_dict):
     ''' Intended for situations where there is a small number of often repeated values that
     most of the data might have and you want to compare distributions without them obscuring
-    one another 
-    
+    one another
+
     x_values_list: a list of data lists or arrays
     '''
     list_of_unique_x_values = _get_list_of_unique_x_values(list_of_x_data_lists)
@@ -35,7 +32,7 @@ def overlay_bar_charts_from_numeric_arrays(list_of_x_data_lists, legend_label_li
             y_data_bars.append(y_value)
         list_of_x_data_bars.append(np.array(x_data_bars))
         list_of_y_data_bars.append(np.array(y_data_bars))
-    
+
     overlay_bar_charts(list_of_x_data_bars, list_of_y_data_bars, legend_label_list, x_values_are_categorical=False, plot_options_dict=plot_options_dict)
 
 
@@ -59,7 +56,7 @@ def overlay_bar_charts(list_of_x_data_bars, list_of_y_data_bars, legend_label_li
         plt.figure(figsize=plot_options_dict['figshape'])
     else:
         plt.figure(figsize=(12,8))
-    if 'grid' in plot_options_dict.keys() and plot_options_dict['grid']==True:
+    if 'grid' in plot_options_dict.keys() and plot_options_dict['grid']:
         plt.grid(True)
     n_datasets = len(list_of_x_data_bars)
     assert n_datasets == len(list_of_y_data_bars)
@@ -104,7 +101,7 @@ def overlay_bar_charts(list_of_x_data_bars, list_of_y_data_bars, legend_label_li
 
 #handy function to plot some histograms of DataFrame columns
 def plot_histogram(df, column_name, sort=False):
-    
+
     histo = df[column_name].value_counts()
     if(sort):
         histo = histo.sort_index()
@@ -115,10 +112,10 @@ def plot_histogram(df, column_name, sort=False):
     plt.title("Histogram of "+column_name+" values")
     plt.xlabel(column_name)
     plt.ylabel('Frequency')
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(18.5, 10.5, forward=True)
     plt.show()
-    
+
 
 #plot correlation of categorical feature with outcome variable
 def plot_feature_correlation(df, feature_column_name, sort=False):
@@ -132,38 +129,35 @@ def plot_feature_correlation(df, feature_column_name, sort=False):
     plt.title("Correlation of outcome variable with "+feature_column_name+" categories")
     plt.xlabel(feature_column_name)
     plt.ylabel('Percent non spectrum')
-    fig = matplotlib.pyplot.gcf()
+    fig = plt.gcf()
     fig.set_size_inches(18.5, 10.5, forward=True)
     plt.show()
 
 
 def plot_classifier_profiles(bunch_of_classifier_data, plot_title, default_coverage_to_plot = 0.0, specificity_bin_width = 0.025, ylim=(0., 1.), legend_font_size=16, shaded_sensitivity_zones=True):
-    import matplotlib.pyplot as plt
-    from matplotlib.colors import LinearSegmentedColormap 
-    
     fig = plt.figure(figsize=(20, 6))
 
-    #setup axes        
+    #setup axes
     plt.xlabel('specificity', fontsize=28)
     plt.xticks(np.arange(0.0, 1.1, 0.05), fontsize=16)
     plt.xlim(0.0, 1.0)
     plt.ylabel('sensitivity', fontsize=28)
     plt.yticks(np.arange(0.0, 1.1, 0.05), fontsize=16)
     plt.ylim(ylim)
-    
+
     #add shaded sensitivity zones if required
     if (shaded_sensitivity_zones):
     	plt.axhspan(0.7, 0.8, edgecolor='none', facecolor='lightyellow', alpha=1.0, zorder=1)
     	plt.axhspan(0.8, 0.9, edgecolor='none', facecolor='orange', alpha=0.3, zorder=1)
 
-    #plot data 
+    #plot data
     for (classifier_info, sensitivity_specificity_dataframe) in bunch_of_classifier_data:
         print 'Plot for classifier info: ', classifier_info
-    
+
     	#if we're being asked to plot the optimal point only (as opposed to an ROC curve)
     	if ('type' in classifier_info and classifier_info['type'] == 'optimal_point'):
-        
-        	label = classifier_info['label'] if 'label' in classifier_info else 'unnamed classifier' 
+
+        	label = classifier_info['label'] if 'label' in classifier_info else 'unnamed classifier'
         	if sensitivity_specificity_dataframe['coverage']<1.0:
         		label = label + ' @ '+"{0:.0f}%".format(100*sensitivity_specificity_dataframe['coverage'])+' coverage'
         	size = classifier_info['size'] if 'size' in classifier_info else 400
@@ -175,49 +169,49 @@ def plot_classifier_profiles(bunch_of_classifier_data, plot_title, default_cover
         		facecolors = classifier_info['color'] if 'color' in classifier_info else None
         	else:
         		facecolors = 'none'
-	
-        	
-        	
-         	
+
+
+
+
         	label = label + " [ {0:.0f}%".format(100*sensitivity_specificity_dataframe['sensitivity'])+' sens, '
         	label = label + "{0:.0f}%".format(100*sensitivity_specificity_dataframe['specificity'])+' spec]'
-       
+
 
         	plt.scatter([sensitivity_specificity_dataframe['specificity']],[sensitivity_specificity_dataframe['sensitivity']], s=size, alpha=alpha, facecolors=facecolors, edgecolors=edgecolors, label=label, zorder=10)
-    	
+
     	#we default to plotting curves
     	else:
-    	
+
             min_acceptable_coverage = classifier_info['coverage'] if 'coverage' in classifier_info else default_coverage_to_plot
             specificity_sensitivity_values = [(spec, sen) for spec, sen in zip(sensitivity_specificity_dataframe['specificity'].values, sensitivity_specificity_dataframe['sensitivity'].values)]
             plot_color = classifier_info['color'] if 'color' in classifier_info else None
-            label = classifier_info['label'] if 'label' in classifier_info else 'unnamed classifier' 
+            label = classifier_info['label'] if 'label' in classifier_info else 'unnamed classifier'
             linewidth = classifier_info['linewidth'] if 'linewidth' in classifier_info else 3
             linestyle = classifier_info['linestyle'] if 'linestyle' in classifier_info else '-'
-	
-	
+
+
             if 'coverage' not in sensitivity_specificity_dataframe:
                 plt.plot(sensitivity_specificity_dataframe['specificity'], sensitivity_specificity_dataframe['sensitivity'], marker=None, linewidth=linewidth, label=label, color = plot_color, linestyle=linestyle)
-	 
+
             else:
-	                                   
+
                 sensitivity_specificity_dataframe['rounded_specificity'] = sensitivity_specificity_dataframe['specificity'].apply(lambda x: 0 if np.isnan(x) else specificity_bin_width*(int(x/specificity_bin_width)) )
-				
+
                 acceptable_coverage_sensitivity_specificity_dataframe = sensitivity_specificity_dataframe[sensitivity_specificity_dataframe.coverage>=min_acceptable_coverage]
                 min_sensitivity = acceptable_coverage_sensitivity_specificity_dataframe.groupby('rounded_specificity')['sensitivity'].min()
                 max_sensitivity = acceptable_coverage_sensitivity_specificity_dataframe.groupby('rounded_specificity')['sensitivity'].max()
 
                 specificity = acceptable_coverage_sensitivity_specificity_dataframe.groupby('rounded_specificity')['rounded_specificity'].max()
-	
+
                 plt.plot(specificity, max_sensitivity, linewidth=linewidth, label=label, color = plot_color, linestyle=linestyle)
-	            
+
 
     #add legend
     plt.legend(loc="lower left", prop={'size':legend_font_size})
-    
+
     #add title
     plt.title(plot_title, fontsize=20, fontweight='bold')
-    
+
     #let's do it!
     plt.show()
     return plt,fig
@@ -226,13 +220,13 @@ def plot_classifier_profiles(bunch_of_classifier_data, plot_title, default_cover
 def barplot_classifier_profiles(bunch_of_classifier_data, plot_title, sensitivity_low=0.75, sensitivity_high=0.85, min_coverage=0.7):
 
     barplot_data = []
-    
+
     for (classifier_info, sensitivity_specificity_dataframe) in bunch_of_classifier_data:
-        label = classifier_info['label'] if 'label' in classifier_info else 'unnamed classifier' 
-    
+        label = classifier_info['label'] if 'label' in classifier_info else 'unnamed classifier'
+
         if 'coverage' in sensitivity_specificity_dataframe.columns:
             sensitivity_specificity_dataframe = sensitivity_specificity_dataframe[(sensitivity_specificity_dataframe['coverage']>=min_coverage) ]
-        
+
             sensitivity = sensitivity_specificity_dataframe.groupby('rounded_specificity')['sensitivity'].max()
             specificity = sensitivity_specificity_dataframe.groupby('rounded_specificity')['rounded_specificity'].max()
         else:
@@ -253,21 +247,21 @@ def barplot_classifier_profiles(bunch_of_classifier_data, plot_title, sensitivit
     #setup value labels
     for i, v in enumerate( [x[1] for x in barplot_data] ):
         plt.text(v - 0.05,  i-0.1, "{0:.0f}%".format(100*v), color='black', fontsize=24)
-    
+
     #setup name labels
     for i,v in enumerate ( [x[0]['label'] for x in bunch_of_classifier_data] ):
         plt.text(0.02,  i-0.1, v, color='black', fontsize=18)
-   
+
     #setup colors
     for i in range(0, len(barlist)):
         classifier_info = bunch_of_classifier_data[i][0]
         color = classifier_info['color'] if 'color' in classifier_info else None
         barlist[i].set(facecolor=color)
 
-    #setup axes        
+    #setup axes
     plt.ylabel('algorithm', fontsize=28)
     plt.yticks([])
- 
+
     plt.xlabel('specificity', fontsize=28)
     plt.xticks(np.arange(0.0, 1.1, 0.05), fontsize=16)
     plt.xlim(0.0, 1.0)
@@ -275,9 +269,7 @@ def barplot_classifier_profiles(bunch_of_classifier_data, plot_title, sensitivit
     #add title
     plt.title(plot_title, fontsize=20, fontweight='bold')
 
-    #let's do it!    
+    #let's do it!
     print 'show figure with title ', plot_title
     plt.show()
-    return plt,fig
-
-
+    return plt, fig
