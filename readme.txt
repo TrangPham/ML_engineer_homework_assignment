@@ -34,8 +34,23 @@ pip install sklearn
 pip install scipy
 pip install dill
 
+Overall Design of Cognoa DS lib
+----
+It looks like there are two versions of the dataset that we can currently operate on: V1, V2
+Each of the datasets is a set of questions in which parents fill out a form and answer, and we
+are trying to reason about these answers and us ML to determine disorders and risks.
+
+I would reorganize by splitting the folder into generic helper functions such as the plotting tools
+and cognoa specific functionality.
+
+Overall I would create classes for each version of the question set. Each class would contain its
+own calculator, and have adaptors to convert to other versions. This would allow for much more readability
+and for new versions to be easily introduced.
+
 More Todos
 ----
 - it looks like `ados1_b4` values should go into an enum and each value should be documented and have a meaning
 - In cog_calculators:
   - risk levels should be an enum
+- In video_analyst_lib:
+  - this file should be split up into multiple files
