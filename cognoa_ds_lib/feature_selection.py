@@ -7,11 +7,8 @@
 ### The tally list has been added
 
 
-import math, random
 import copy as cp
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
 from ds_helper_functions import *
 from sklearn.ensemble import RandomForestClassifier
 

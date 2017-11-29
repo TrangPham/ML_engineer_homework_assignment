@@ -119,7 +119,7 @@ def plot_histogram(df, column_name, sort=False):
 
 #plot correlation of categorical feature with outcome variable
 def plot_feature_correlation(df, feature_column_name, sort=False):
-    c = 1.0  - df.groupby(feature_column_name)['outcome'].mean()
+    c = 1.0 - df.groupby(feature_column_name)['outcome'].mean()
     if (sort):
         c = c.sort_index()
     X = np.array(c.keys())

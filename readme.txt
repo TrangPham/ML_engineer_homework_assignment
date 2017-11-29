@@ -33,3 +33,7 @@ pip install pandas
 pip install sklearn
 pip install scipy
 pip install dill
+
+More Todos
+----
+- it looks like `ados1_b4` values should go into an enum and each value should be documented and have a meaning
