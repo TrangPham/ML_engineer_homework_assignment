@@ -1,11 +1,6 @@
-import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plot
-import math
-import sys
 import copy as cp
-import matplotlib.pyplot as plt
 import numbers
 import collections
 from sklearn import metrics
@@ -23,7 +18,7 @@ THE_OTHER_ANALYSTS = 'the_other_analysts'
 
 
 #########
-### 
+###
 ###   API TO EVALUATE ANALYST AGREEMENT/ACCURACY AND QUESTION DIFFICULTIES
 ###
 #########
@@ -32,8 +27,8 @@ THE_OTHER_ANALYSTS = 'the_other_analysts'
 def rate_analysts_against_eachother(scoresheet_dataframe, analysts_to_rate, questions_to_rate_over, rating_aggregation_method=np.mean, analyst_id_column_name='analyst', subject_id_column_name='submission'):
 
     ''' This function is what you should use to determine the reliabilitiy of analysts over some questions, each compared to the rest
-    
-    
+
+
         Functionally, it will perform the rating method on every analyst and for every question. Then it will
     aggregate these ratings across questions using an aggregation method of your choice.
 
@@ -60,19 +55,19 @@ def rate_analysts_against_eachother(scoresheet_dataframe, analysts_to_rate, ques
 
     #every analyst in the scoresheet other than the ones specified by the user will be excluded
     analysts_to_exclude = present_analysts - set(analysts_to_rate)
-    
+
     #pivot the scoresheet dataset into what is called a "comparison dataframe" format
-    analyst_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate_over, 
+    analyst_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate_over,
                 analyst_id_column_name=analyst_id_column_name, reference_analysts=[], exclude_these_analysts=analysts_to_exclude, subject_id_column_name= subject_id_column_name, indeterminate_answer_code=9, debug=False)
-    
-    
+
+
     #compute every supported agreement metric, one at a time
     analyst_reliability_output = {}
     analyst_question_reliability_output = {}
 
     for rating_method in supported_rating_methods:
-        
-        #call on some helper functions to run comparisons on a question and analyst levels        
+
+        #call on some helper functions to run comparisons on a question and analyst levels
         analyst_question_reliabilities = get_separate_reliabilities_for_all_analysts_and_questions(analyst_comparison_dataframe, calculation_to_do=rating_method,
                 questions_to_include=questions_to_rate_over, reference_column_name=THE_OTHER_ANALYSTS, debug=False)
         analyst_question_reliabilities = analyst_question_reliabilities.sort_values(analyst_id_column_name)
@@ -85,7 +80,7 @@ def rate_analysts_against_eachother(scoresheet_dataframe, analysts_to_rate, ques
             analyst_question_reliability_output[rating_method][question] = [0.0] * len(analysts_to_rate)
         for analyst, question, reliability in zip(analyst_question_reliabilities[analyst_id_column_name], analyst_question_reliabilities['question'], analyst_question_reliabilities['reliability'].values):
             analyst_question_reliability_output[rating_method][question][analysts_to_rate.index(analyst.replace('analyst_',''))] = reliability
-            
+
         #put the question-aggregated agreement scores into the output data structure
         analyst_reliability_output[rating_method] = [0.0] * len(analysts_to_rate)
         for analyst, reliability in zip(analyst_reliabilities.index, analyst_reliabilities['reliability'].values):
@@ -108,8 +103,8 @@ def rate_analysts_against_eachother(scoresheet_dataframe, analysts_to_rate, ques
     for analyst in analysts_to_rate:
         analyst_overall_coverage = rating_aggregation_method(coverage_df['determinate_answer_by_analyst_'+analyst].values)
         analyst_coverage_output.append(analyst_overall_coverage)
-        
-    
+
+
     #prepare the agreement over all questions as a separate Dataframe
     all_Qs_output_dictionary = {analyst_id_column_name:analysts_to_rate, 'coverage':analyst_coverage_output}
     for rating_method in supported_rating_methods:
@@ -123,9 +118,9 @@ def rate_analysts_against_eachother(scoresheet_dataframe, analysts_to_rate, ques
             per_Q_output_dictionary['agreement_on_'+question+'_using_'+rating_method] = analyst_question_reliability_output[rating_method][question]
 
 
-    #format the outputs into a dictionary of DataFrame to return to caller  
+    #format the outputs into a dictionary of DataFrame to return to caller
     output_dict = {}
-    output_dict['agreement_over_all_questions'] = pd.DataFrame(all_Qs_output_dictionary)     
+    output_dict['agreement_over_all_questions'] = pd.DataFrame(all_Qs_output_dictionary)
     output_dict['agreement_per_question'] = pd.DataFrame(per_Q_output_dictionary)
     return output_dict
 
@@ -134,8 +129,8 @@ def rate_analysts_against_eachother(scoresheet_dataframe, analysts_to_rate, ques
 def rate_analysts_against_reference(scoresheet_dataframe, analysts_to_rate, reference, questions_to_rate_over, rating_aggregation_method=np.mean, analyst_id_column_name='analyst', subject_id_column_name='submission'):
 
     ''' This function is what you should use to determine the reliabilitiy of analysts over some questions, each compared to a reference ground truth
-    
-    
+
+
         Functionally, it will perform the rating method on every analyst and for every question. Then it will
     aggregate these ratings across questions using an aggregation method of your choice.
 
@@ -162,7 +157,7 @@ def rate_analysts_against_reference(scoresheet_dataframe, analysts_to_rate, refe
     for analyst in analysts_to_rate:
         if analyst not in present_analysts:
             raise ValueError("Couldn't find any data for analyst "+analyst+". Make sure the input scoresheet dataframe is complete")
-   
+
     #make sure the reference analyst exists in the passed dataframe
     if reference is None:
             raise ValueError("To compare analyst to reference you need to specify a valid analyst or instrument as reference")
@@ -175,26 +170,26 @@ def rate_analysts_against_reference(scoresheet_dataframe, analysts_to_rate, refe
             raise ValueError("Cannot rate analyst "+reference+" while also using him/her as a reference")
 
     #every analyst in the scoresheet other than the ones specified by the user will be excluded
-    analysts_to_exclude = present_analysts - set(analysts_to_rate+[reference]) 
-    
-    
+    analysts_to_exclude = present_analysts - set(analysts_to_rate+[reference])
+
+
     #pivot the scoresheet dataset into what is called a "comparison dataframe" format
-    analyst_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate_over, 
+    analyst_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate_over,
                 analyst_id_column_name=analyst_id_column_name, reference_analysts=reference, exclude_these_analysts=analysts_to_exclude, subject_id_column_name= subject_id_column_name, indeterminate_answer_code=9, debug=False)
-    
-    
-    
+
+
+
     #compute every supported agreement metric, one at a time
     analyst_reliability_output = {}
     analyst_question_reliability_output = {}
 
     for rating_method in supported_rating_methods:
-        
-        #call on some helper functions to run comparisons on a question and analyst levels        
+
+        #call on some helper functions to run comparisons on a question and analyst levels
         analyst_question_reliabilities = get_separate_reliabilities_for_all_analysts_and_questions(analyst_comparison_dataframe, calculation_to_do=rating_method,
                 questions_to_include=questions_to_rate_over, reference_column_name=reference, debug=False)
         analyst_question_reliabilities = analyst_question_reliabilities.sort_values(analyst_id_column_name)
-                
+
         analyst_reliabilities = analyst_question_reliabilities.groupby(analyst_id_column_name).apply(rating_aggregation_method)
         analyst_reliabilities = analyst_reliabilities.sort_index()
 
@@ -204,7 +199,7 @@ def rate_analysts_against_reference(scoresheet_dataframe, analysts_to_rate, refe
             analyst_question_reliability_output[rating_method][question] = [0.0] * len(analysts_to_rate)
         for analyst, question, reliability in zip(analyst_question_reliabilities[analyst_id_column_name], analyst_question_reliabilities['question'], analyst_question_reliabilities['reliability'].values):
             analyst_question_reliability_output[rating_method][question][analysts_to_rate.index(analyst.replace('analyst_',''))] = reliability
-            
+
         #put the question-aggregated agreement scores into the output data structure
         analyst_reliability_output[rating_method] = [0.0] * len(analysts_to_rate)
         for analyst, reliability in zip(analyst_reliabilities.index, analyst_reliabilities['reliability'].values):
@@ -227,8 +222,8 @@ def rate_analysts_against_reference(scoresheet_dataframe, analysts_to_rate, refe
     for analyst in analysts_to_rate:
         analyst_overall_coverage = rating_aggregation_method(coverage_df['determinate_answer_by_analyst_'+analyst].values)
         analyst_coverage_output.append(analyst_overall_coverage)
-        
-    
+
+
     #prepare the agreement over all questions as a separate Dataframe
     all_Qs_output_dictionary = {analyst_id_column_name:analysts_to_rate, 'coverage':analyst_coverage_output}
     for rating_method in supported_rating_methods:
@@ -242,9 +237,9 @@ def rate_analysts_against_reference(scoresheet_dataframe, analysts_to_rate, refe
             per_Q_output_dictionary['agreement_with_'+reference+'_on_'+question+'_using_'+rating_method] = analyst_question_reliability_output[rating_method][question]
 
 
-    #format the outputs into a dictionary of DataFrame to return to caller  
+    #format the outputs into a dictionary of DataFrame to return to caller
     output_dict = {}
-    output_dict['agreement_over_all_questions'] = pd.DataFrame(all_Qs_output_dictionary)     
+    output_dict['agreement_over_all_questions'] = pd.DataFrame(all_Qs_output_dictionary)
     output_dict['agreement_per_question'] = pd.DataFrame(per_Q_output_dictionary)
     return output_dict
 
@@ -254,7 +249,7 @@ def rate_questions_on_analyst_agreement_with_eachother(scoresheet_dataframe, que
 
 
     ''' This function is what you should use to determine the analyst agreement with ground truth on a question by question basis
-    
+
     Functionally, it will perform the rating method on every analyst and for every question. Then it will
     aggregate these ratings across analysts using an aggregation method of your choice.
 
@@ -282,17 +277,17 @@ def rate_questions_on_analyst_agreement_with_eachother(scoresheet_dataframe, que
 
     #every analyst in the scoresheet other than the ones specified by the user will be excluded
     analysts_to_exclude = present_analysts - set(analysts_to_rate_over)
-    
+
     #pivot the scoresheet dataset into what is called a "comparison dataframe" format
-    question_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate, 
+    question_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate,
                 analyst_id_column_name= analyst_id_column_name, reference_analysts=[], exclude_these_analysts=analysts_to_exclude, subject_id_column_name= subject_id_column_name, indeterminate_answer_code=9, debug=False)
 
     #compute every supported agreement metric, one at a time
     question_reliability_output = {}
-    
+
     for rating_method in supported_rating_methods:
-    
-        #call on some helper functions to run comparisons on a question and analyst levels        
+
+        #call on some helper functions to run comparisons on a question and analyst levels
         reliabilities_df = get_separate_reliabilities_for_all_analysts_and_questions(question_comparison_dataframe, calculation_to_do=rating_method,
                 questions_to_include=questions_to_rate, reference_column_name=THE_OTHER_ANALYSTS, debug=False)
         reliabilities_df = reliabilities_df.sort_values(analyst_id_column_name)
@@ -315,19 +310,19 @@ def rate_questions_on_analyst_agreement_with_eachother(scoresheet_dataframe, que
     for question in questions_to_rate:
         question_overall_coverage = coverage_df[question]
         question_coverage_output.append(question_overall_coverage)
-    
-    #format the output into DataFrame to return to caller  
-    output_dataframe = pd.DataFrame({'question':questions_to_rate, 'coverage':question_coverage_output})  
+
+    #format the output into DataFrame to return to caller
+    output_dataframe = pd.DataFrame({'question':questions_to_rate, 'coverage':question_coverage_output})
     for rating_method in supported_rating_methods:
         output_dataframe['agreement_using_'+rating_method] = question_reliability_output[rating_method]
- 
-    return output_dataframe 
+
+    return output_dataframe
 
 def rate_questions_on_analyst_agreement_with_reference(scoresheet_dataframe, questions_to_rate, analysts_to_rate_over, reference, rating_aggregation_method=np.mean, analyst_id_column_name='analyst', subject_id_column_name='submission'):
 
 
     ''' This function is what you should use to determine the analyst inter-agreement on a question by question basis
-    
+
     Functionally, it will perform the rating method on every analyst and for every question. Then it will
     aggregate these ratings across analysts using an aggregation method of your choice.
 
@@ -362,21 +357,21 @@ def rate_questions_on_analyst_agreement_with_reference(scoresheet_dataframe, que
     #an analyst cannot be chosen as both a reference and as a rated analyst
     if reference in analysts_to_rate_over:
             raise ValueError("Cannot rate analyst "+reference+" while also using him/her as a reference")
-    
+
 
     #every analyst in the scoresheet other than the ones specified by the user will be excluded
-    analysts_to_exclude = present_analysts - set(analysts_to_rate_over+[reference]) 
-    
+    analysts_to_exclude = present_analysts - set(analysts_to_rate_over+[reference])
+
     #pivot the scoresheet dataset into what is called a "comparison dataframe" format
-    question_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate, 
+    question_comparison_dataframe = _create_analyst_comparison_dataframe(scoresheet_dataframe, questions_to_include_in_comparison=questions_to_rate,
                 analyst_id_column_name= analyst_id_column_name, reference_analysts=[reference], exclude_these_analysts=analysts_to_exclude, subject_id_column_name= subject_id_column_name, indeterminate_answer_code=9, debug=False)
 
     #compute every supported agreement metric, one at a time
     question_reliability_output = {}
-    
+
     for rating_method in supported_rating_methods:
 
-        #call on some helper functions to run comparisons on a question and analyst levels        
+        #call on some helper functions to run comparisons on a question and analyst levels
         reliabilities_df = get_separate_reliabilities_for_all_analysts_and_questions(question_comparison_dataframe, calculation_to_do=rating_method,
                 questions_to_include=questions_to_rate, reference_column_name=reference, debug=False)
         reliabilities_df = reliabilities_df.sort_values(analyst_id_column_name)
@@ -399,17 +394,17 @@ def rate_questions_on_analyst_agreement_with_reference(scoresheet_dataframe, que
     for question in questions_to_rate:
         question_overall_coverage = coverage_df[question]
         question_coverage_output.append(question_overall_coverage)
-    
-    #format the output into DataFrame to return to caller        
-    output_dataframe = pd.DataFrame({'question':questions_to_rate, 'coverage':question_coverage_output})  
+
+    #format the output into DataFrame to return to caller
+    output_dataframe = pd.DataFrame({'question':questions_to_rate, 'coverage':question_coverage_output})
     for rating_method in supported_rating_methods:
         output_dataframe['agreement_with_'+reference+'_using_'+rating_method] = question_reliability_output[rating_method]
- 
-    return output_dataframe 
+
+    return output_dataframe
 
 
 #########
-### 
+###
 ###   HELPER FUNCTIONS
 ###
 #########
@@ -417,11 +412,11 @@ def rate_questions_on_analyst_agreement_with_reference(scoresheet_dataframe, que
 
 
 def _create_analyst_comparison_dataframe(analyst_scoresheet_dataframe, questions_to_include_in_comparison, analyst_id_column_name, reference_analysts, exclude_these_analysts, subject_id_column_name, other_groupby_keys=[], prior_analyst_weights_hypothesis_dict=None, indeterminate_answer_code=9, debug=False):
-    ''' This is the main API endpoint to convert an input dataframe into a format convenient for analysis by the other API in this lib 
-    
+    ''' This is the main API endpoint to convert an input dataframe into a format convenient for analysis by the other API in this lib
+
         An analyst_comparison_dataframe contains one unique (submission, question) per row, and multiple columns, one per analyst answer
-        
-        
+
+
         analyst_scoresheet_dataframe: input dataframe, expected to contain one unique (submission, analyst) per row, and multiple columns, one per question, containing question answers in the proper enconding
 
         reference_analysts: this is a list of analyst names that should not be used in the analysis (presumably because they will be
@@ -430,16 +425,16 @@ def _create_analyst_comparison_dataframe(analyst_scoresheet_dataframe, questions
 
 		This function also enforces a naming convention that every analyst column must have a prefix 'analyst_'.
 		The analysis code looks for this prefix to decide which columns are for the analysts that should be evaluated.
-		
+
 		prior_analyst_weights_hypothesis_dict: relative weights per analyst. These are used when combining analyst judgments using majority vote
-		
+
     '''
-    
+
     def _enforce_analyst_naming_convention(name):
-        ''' needed so that after conversion to analysts into columns it is clear which columns are for real analysts 
+        ''' needed so that after conversion to analysts into columns it is clear which columns are for real analysts
         '''
         if name in reference_analysts:
-            #### This is a special case 
+            #### This is a special case
             return name
         name = 'analyst_'+str(name) if 'analyst_' not in str(name) else name
         return name
@@ -533,14 +528,14 @@ def _create_analyst_comparison_dataframe(analyst_scoresheet_dataframe, questions
         print 'Now convert data frame to format for reliability analysis'
     analyst_comparison_dataframe = _convert_df_from_questions_in_columns_to_rows(reliability_analysis_df, questions_to_include=questions_to_include_in_comparison, subject_id_column_name=subject_id_column_name,
               analyst_id_column_name=analyst_id_column_name, other_groupby_keys=other_groupby_keys)
-    
-    
+
+
     #add determinate answer info as boolean columns, one per analyst
     for analyst in all_analyst_names:
         analyst_comparison_dataframe['determinate_answer_by_'+analyst] = np.where(analyst_comparison_dataframe[analyst]==indeterminate_answer_code, 0, 1)
 
-    
-    return analyst_comparison_dataframe 
+
+    return analyst_comparison_dataframe
 
 
 
@@ -556,7 +551,7 @@ def _create_analyst_comparison_dataframe(analyst_scoresheet_dataframe, questions
 
 def get_separate_reliabilities_for_all_analysts_and_questions(dataframe, calculation_to_do, questions_to_include, reference_column_name=None, debug=True, **kwargs):
     ''' Get reliability metrics for one or more questions for all contained analysts.
-    This function is like get_reliabilities_for_given_question, except that there is an 
+    This function is like get_reliabilities_for_given_question, except that there is an
     additional column in the input to specify the question being asked. These questions are
     looped over and get_reliabilities_for_given_question is called for each question
 
@@ -589,7 +584,7 @@ def _get_reliabilities_for_given_question(dataframe, calculation_to_do, question
                    be one column for each analyst WHICH MUST USE PREFIX 'analyst_', and one row for
                    each subject, with entries representing the responses. Should also have a reference column
                    if desired as a ground truth to evaluate analysts against.
-                   Note: Missing/not answered results should be included as either np.nan, 'nan', or ''. 
+                   Note: Missing/not answered results should be included as either np.nan, 'nan', or ''.
                        All other responses are assumed to be valid.
         calculation_to_do: string to specify which reliability metric to calculate. Suggested options to support:
 			==> To get one reliability metric per analzer. Options:
@@ -603,7 +598,7 @@ def _get_reliabilities_for_given_question(dataframe, calculation_to_do, question
         reference_column_name: name of column that reliability is compared with (not defined for fleiss kappas)
         question: the question being evaluated
     returns:
-        If calculation_to_do specifies that there should be a metric for each analyst, returns a dictionary that 
+        If calculation_to_do specifies that there should be a metric for each analyst, returns a dictionary that
         contains one reliability value per analyst. If calculation_to_do specifies a single metric over all analysts
         (such as the fleiss kappa), returns a single float as reliability.
     '''
@@ -633,21 +628,21 @@ def _get_reliabilities_for_given_question(dataframe, calculation_to_do, question
                 this_reference_column_name = ALL_ANALYSTS_EXCEPT +str(analyst)
             else:
                 this_reference_column_name = reference_column_name
-            
-            
+
+
             if analyst not in dataframe:
             	raise ValueError('_get_reliabilities_for_given_question(): dataframe should contain analyst column '+analyst+" but doesn't")
             if this_reference_column_name not in dataframe:
              	raise ValueError('_get_reliabilities_for_given_question(): dataframe should contain this_reference_column_name column '+ str(this_reference_column_name) +" but doesn't")
-             	
-             	
+
+
             #HALIM: IF THE separate_reliability_estimate_for_each_analyst is TRUE, AND reference IS NOT THE_OTHER_ANALYSTS ,
             #THEN FILTER dataframe TO EXCLUDE ALL INSTANCES WHERE THE analyst IN QUESTION GAVE AN INDETERMINATE ANSWER
             if (reference_column_name!=THE_OTHER_ANALYSTS and separate_reliability_estimate_for_each_analyst):
-                filtered_dataframe = dataframe[dataframe["determinate_answer_by_"+analyst]==1] 
+                filtered_dataframe = dataframe[dataframe["determinate_answer_by_"+analyst]==1]
             else:
                 filtered_dataframe = dataframe.copy(deep=True)
-                
+
             reliability = _get_reliability_for_given_analyst_and_question(filtered_dataframe[analyst].values, filtered_dataframe[this_reference_column_name].values,
                 calculation_to_do, **kwargs)
             reliability_results['analyst'].append(analyst)
@@ -689,19 +684,19 @@ def _no_missing_values_in_row(x, analysts_to_evaluate):
     return True
 
 def _get_reliability_given_all_analysts_for_question(dataframe, analysts_to_evaluate, calculation_to_do, **kwargs):
-    ''' Calculate reliability for a all analysts for a given question. 
+    ''' Calculate reliability for a all analysts for a given question.
     Inputs:
         dataframe: results for all analysts for a given question. Some values may be emptyif not all completed.
         calulation_to_do: only "fleiss_kappa" implemented for this approach at the moment
     Returns:
         float of reliability result
-    Note: Missing/not answered results should be included as either np.nan, 'nan', or ''. 
+    Note: Missing/not answered results should be included as either np.nan, 'nan', or ''.
         All other responses are assumed to be valid.
     '''
 
     def reformat_df_for_fleiss_kappa(in_df):
         ''' Assumes input is DF with analysts in columns, subjects in rows, and each response
-        in the field entries. Want to reformat to dataframe with subjects in rows, response categories in 
+        in the field entries. Want to reformat to dataframe with subjects in rows, response categories in
         columns, and counts of number of analysts responding with that rating for that subject in each entry '''
 
         ### First transpose to get subjects in columns and analysts in rows:
@@ -720,14 +715,14 @@ def _get_reliability_given_all_analysts_for_question(dataframe, analysts_to_eval
         result_df.index = in_df.index
 
         return result_df
-        
-        
+
+
     if calculation_to_do not in ['fleiss_kappa']:
         raise ValueError('calculation_to_do '+calculation_to_do+' not defined for all analysts calculation')
     all_completed_df = dataframe[dataframe.apply(_no_missing_values_in_row, axis=1, args=(analysts_to_evaluate,))]
     if calculation_to_do == 'fleiss_kappa':
         refornatted_for_fleiss_df = reformat_df_for_fleiss_kappa(all_completed_df[analysts_to_evaluate])
-        
+
         print refornatted_for_fleiss_df
 
         fleiss_kappa = _compute_fleiss_kappa(refornatted_for_fleiss_df.values.tolist())
@@ -735,14 +730,14 @@ def _get_reliability_given_all_analysts_for_question(dataframe, analysts_to_eval
 
 
 def _get_reliability_for_given_analyst_and_question(analyst_results, reference_results, calculation_to_do, **kwargs):
-    ''' Calculate reliability for a particular analyst. 
+    ''' Calculate reliability for a particular analyst.
     Inputs:
         analyst_results: a numpy array of results for one or more analysts. Some values may be emptyif not all completed.
         reference_results: the "ground truth" reference numpy array of results. Some values may be null if not all completed.
         calulation_to_do: see documentation of get_reliabilities_for_given_question
     Returns:
         float of reliability result
-    Note: Missing/not answered results should be included as either np.nan, 'nan', or ''. 
+    Note: Missing/not answered results should be included as either np.nan, 'nan', or ''.
         All other responses are assumed to be valid.
     '''
 
@@ -760,7 +755,7 @@ def _get_reliability_for_given_analyst_and_question(analyst_results, reference_r
                 ok_reference_results.append(reference_results[idx])
         return np.array(ok_analyst_results), np.array(ok_reference_results)
 
-    
+
     if calculation_to_do not in ['percent_agreement', 'cohen_kappa', 'weighted_cohen_kappa']:
         raise ValueError('calculation_to_do '+calculation_to_do+' not defined for analyst vs reference calculation')
     valid_analyst_results, valid_reference_results = get_results_completed_by_both(analyst_results, reference_results)
@@ -779,7 +774,7 @@ def _get_reliability_for_given_analyst_and_question(analyst_results, reference_r
         return kappa_value
 
     if calculation_to_do == 'weighted_cohen_kappa':
-                            
+
         weights = kwargs['weights'] if 'weights' in kwargs else [1]*len(valid_analyst_results)
         ### sklearn only has weights supported here in version 0.18 and later
         try:
@@ -788,7 +783,7 @@ def _get_reliability_for_given_analyst_and_question(analyst_results, reference_r
                 print 'Failed to evaluate cohen kappa with weights. Are you using an older version of sklearn (only implemented in version 0.18 and later)?'
                 raise ValueError(exception_msg)
         return kappa_value
-        
+
 
 
 
@@ -806,19 +801,19 @@ def _compute_fleiss_kappa(mat, debug=False):
             @return The number of ratings
             @throws AssertionError If lines contain different number of ratings """
         n = sum(mat[0])
-    
+
         assert all(sum(line) == n for line in mat[1:]), "Line count != %d (n value)." % n
         return n
 
     n = checkEachLineCount(mat)   # PRE : every line count must be equal to n
     N = len(mat)
     k = len(mat[0])
-    
+
     if debug:
         print n, "raters."
         print N, "subjects."
         print k, "categories."
-    
+
     # Computing p[]
     p = [0.0] * k
     for j in xrange(k):
@@ -827,8 +822,8 @@ def _compute_fleiss_kappa(mat, debug=False):
             p[j] += mat[i][j]
         p[j] /= N*n
     if debug: print "p =", p
-    
-    # Computing P[]    
+
+    # Computing P[]
     P = [0.0] * N
     for i in xrange(N):
         P[i] = 0.0
@@ -836,32 +831,32 @@ def _compute_fleiss_kappa(mat, debug=False):
             P[i] += mat[i][j] * mat[i][j]
         P[i] = (P[i] - n) / (n * (n - 1))
     if debug: print "P =", P
-    
+
     # Computing Pbar
     Pbar = sum(P) / N
     if debug: print "Pbar =", Pbar
-    
+
     # Computing PbarE
     PbarE = 0.0
     for pj in p:
         PbarE += pj * pj
     if debug: print "PbarE =", PbarE
-    
+
     kappa = (Pbar - PbarE) / (1 - PbarE)
     if debug: print "kappa =", kappa
-    
+
     return kappa
 
 ### Helper function if needed depending on the format of the input dataframe for the reliability analysis
 def _convert_df_from_questions_in_columns_to_rows(in_df, questions_to_include, subject_id_column_name, analyst_id_column_name, spectator_column_names=[], other_groupby_keys=[]):
     ''' Assumes input has format with a single column for subject Id, a single column for analyst id, and
-    a different column for each question. 
+    a different column for each question.
 
     Outputs dataframe in the format the rest of this code expects: one column per analyst, and each row being
-    a set of responses for a particular subject and a particular question. 
+    a set of responses for a particular subject and a particular question.
 
     inputs:
-        in_df: pre-converted dataframe. 
+        in_df: pre-converted dataframe.
            An example format might be:
              Cognoa Id, analyst Id, ados1_a1, ados1_a3, ...
                10          121          0          2 ...
@@ -879,7 +874,7 @@ def _convert_df_from_questions_in_columns_to_rows(in_df, questions_to_include, s
                10        ados1_a1         0       2 ...
                10        ados1_a3         2       1 ...
                ...
-    
+
     '''
 
     unique_analysts = np.unique(in_df[analyst_id_column_name].values)
@@ -928,7 +923,7 @@ def _convert_df_from_questions_in_columns_to_rows(in_df, questions_to_include, s
 
 
 #########
-### 
+###
 ###   API TO GENERATE ANALYST RATIING COMBINATION FUNCTIONS
 ###
 #########
@@ -1029,7 +1024,7 @@ def evaluate_analyst_reliabilities_and_create_combination_function(in_df, out_fi
     ### First convert input dataframe to the format that is needed for analysis
     analyst_comparison_dataframe = _create_analyst_comparison_dataframe(in_df, questions_to_include=questions_to_include,
 	    analyst_id_column_name=analyst_id_column_name, reference_analysts=[reference_analyst], exclude_these_analysts=exclude_these_analysts,
-	    use_combination_for_reliability_analysis=use_combination_for_reliability_analysis, subject_id_column_name=subject_id_column_name, 
+	    use_combination_for_reliability_analysis=use_combination_for_reliability_analysis, subject_id_column_name=subject_id_column_name,
 		other_groupby_keys=other_groupby_keys, prior_analyst_weights_hypothesis_dict=prior_analyst_weights_hypothesis_dict, debug=debug )
 
     print 'Now evaluate reliabilties'
@@ -1070,7 +1065,7 @@ def _make_pickled_combination_function(combination_function, out_filename, debug
     ''' make a pickled file that contains all necessary information to perform a combination.
     combination_function can refer to any function that performs a combination
     Any necessary arguments to successfully execute combination_function should be passed in the **kwargs.
-    They will be pickled as well 
+    They will be pickled as well
 
     Returns: pickled object in case user wants to use it immediately
     '''
@@ -1082,19 +1077,3 @@ def _make_pickled_combination_function(combination_function, out_filename, debug
         print 'out filename: ', out_filename
     dill.dump(pickle_this, open(out_filename, 'wb'))
     return pickle_this
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
