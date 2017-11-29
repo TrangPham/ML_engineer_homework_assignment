@@ -1,5 +1,7 @@
 ### Algorithms taken from https://github.com/cognoa/cognoa/tree/develop/app/calculators,
 ### Converted from ruby
+import numpy as np
+import abc
 
 def branch(score, fulcrum, low, high):
 	if score < fulcrum:
@@ -7,12 +9,29 @@ def branch(score, fulcrum, low, high):
 	else:
 		return high
 
-class Cog1Calculator(object):
+class AbstractCogCalculator(object):
+	__metaclass__ = abc.ABCMeta
+
 	def __init__(self):
 		pass
 
 	def is_high_risk(self, risk_level):
 		return 1 if risk_level == 'high_risk' else 0
+
+	@abc.abstractmethod
+	def get_risk_level(self, row):
+		''' '''
+		return
+
+	@abc.abstractmethod
+	def compute_raw_scores_on_df(self, input_df):
+		''' '''
+		return
+
+
+class Cog1Calculator(AbstractCogCalculator):
+	def __init__(self):
+		pass
 
 	def get_risk_level(self, row):
 		score = row['cog1_response']
@@ -83,7 +102,7 @@ class Cog1Calculator(object):
 	def C2(self, vC2, init):
 		init += branch(vC2, 1.5, 0.404, -0.108)
 		return init
-	
+
 	def B1(self, vB1, vA2, init):
 		if vB1<1:
 			init+=0.99
@@ -91,7 +110,7 @@ class Cog1Calculator(object):
 			init+=-0.532
 			init = self.A2(vA2, init)
 		return init
-	
+
 	def B5(self, vB5, init):
 		init += branch(vB5, 0.5, -0.245, -1.144)
 		return init
@@ -108,7 +127,7 @@ class Cog1Calculator(object):
 	def C1(self, vC1, init):
 		init += branch(vC1, 0.5, 0.365, +0.974)
 		return init
-			
+
 	def compute_raw_scores_on_df(self, input_df):
 		''' Assumes that all rows in input_df are cog1 based '''
 		input_df['cog1_response'] = input_df.apply(self.compute_raw_score_on_row, axis=1)
@@ -117,14 +136,9 @@ class Cog1Calculator(object):
 		return input_df
 
 
-import numpy as np
-
-class Cog2Calculator(object):
+class Cog2Calculator(AbstractCogCalculator):
 	def __init__(self):
 		pass
-
-	def is_high_risk(self, risk_level):
-		return 1 if risk_level == 'high_risk' else 0
 
 	def get_risk_level(self, score):
 		if score >= 0.6:
@@ -140,7 +154,7 @@ class Cog2Calculator(object):
 		elif value in [0,1,2,3,4]:
 			return value
 		raise ValueError('unexpected score '+str(value))
-	
+
 	def compute_raw_scores_on_df(self, input_df):
 		questions = ['ados2_a5', 'ados2_a8', 'ados2_b1', 'ados2_b3', 'ados2_b6', 'ados2_b8', 'ados2_b10', 'ados2_d2', 'ados2_d4']
 		df_for_calculation = input_df[questions]
@@ -156,4 +170,3 @@ class Cog2Calculator(object):
 		input_df['risk_level'] = input_df['cog2_response'].apply(self.get_risk_level)
 		input_df['is_high_risk'] = input_df['risk_level'].apply(self.is_high_risk)
 		return input_df
-
